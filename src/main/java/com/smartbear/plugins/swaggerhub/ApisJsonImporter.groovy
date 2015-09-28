@@ -32,10 +32,6 @@ class ApiDescriptor {
 
     @Override
     String toString() {
-        def result = name;
-        if (description != null) {
-            name += " $description"
-        }
-        return result
+        return name
     }
 }
