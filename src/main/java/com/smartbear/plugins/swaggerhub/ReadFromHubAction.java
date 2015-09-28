@@ -2,6 +2,7 @@ package com.smartbear.plugins.swaggerhub;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
+import com.eviware.soapui.impl.wsdl.support.http.HttpClientSupport;
 import com.eviware.soapui.plugins.ActionConfiguration;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.action.support.AbstractSoapUIAction;
@@ -19,6 +20,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.AbstractAction;
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -39,6 +42,7 @@ public class ReadFromHubAction extends AbstractSoapUIAction<WsdlProject> {
 
         if (dialog == null) {
             dialog = ADialogBuilder.buildDialog(Form.class);
+            dialog.getFormField( Form.SEARCH ).setProperty("action", new SearchAction());
         }
 
         try {
@@ -65,19 +69,20 @@ public class ReadFromHubAction extends AbstractSoapUIAction<WsdlProject> {
     }
 
     private XFormOptionsField populateList() throws IOException {
-        String uri = PluginConfig.SWAGGERHUB_API;
+        apis.clear();
+        String uri = PluginConfig.SWAGGERHUB_API + "?limit=50";
 
         String query = dialog.getValue( Form.QUERY );
         if(StringUtils.isNotBlank(query)){
-            uri += "?" + URLEncoder.encode( query.trim());
+            uri += "&" + URLEncoder.encode( query.trim());
         }
 
         LOG.debug( "Reading APIs from uri" );
 
         HttpGet get = new HttpGet(uri);
-        HttpResponse response = new DefaultHttpClient().execute(get);
+        HttpResponse response = HttpClientSupport.getHttpClient().execute(get);
 
-        LOG.debug( "Got APIs, parsing..." );
+        LOG.debug("Got APIs, parsing..." );
 
         apis.addAll(new ApisJsonImporter().importApis(
                 new String(ByteStreams.toByteArray(response.getEntity().getContent()))));
@@ -97,5 +102,25 @@ public class ReadFromHubAction extends AbstractSoapUIAction<WsdlProject> {
 
         @AField( name= "Search", description = "Update list of APIs", type = AField.AFieldType.ACTION )
         public final static String SEARCH = "Search";
+    }
+
+    private class SearchAction extends AbstractAction {
+
+        public SearchAction(){
+            super("Search");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                UISupport.setHourglassCursor();
+                populateList();
+            } catch (IOException e1) {
+                UISupport.showErrorMessage(e1);
+            }
+            finally {
+                UISupport.resetCursor();
+            }
+        }
     }
 }

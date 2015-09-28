@@ -2,6 +2,7 @@ package com.smartbear.plugins.swaggerhub;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.rest.RestService;
+import com.eviware.soapui.impl.wsdl.support.http.HttpClientSupport;
 import com.eviware.soapui.model.settings.Settings;
 import com.eviware.soapui.plugins.ActionConfiguration;
 import com.eviware.soapui.support.Tools;
@@ -13,6 +14,7 @@ import com.eviware.x.form.support.AField;
 import com.eviware.x.form.support.AForm;
 import com.google.common.io.Files;
 import com.smartbear.swagger.Swagger2Exporter;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -58,16 +60,21 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
 
                 String uri = PluginConfig.SWAGGERHUB_API + "/" + groupId + "/" + apiId;
                 HttpPost post = new HttpPost(uri);
-                post.setEntity(new FileEntity(new File(result, "api-docs.json"), "application/swagger+json"));
+                post.setEntity(new FileEntity(new File(result, "api-docs.json"), "application/json"));
                 post.addHeader("Authorization", apikey);
 
-                DefaultHttpClient client = new DefaultHttpClient();
+                DefaultHttpClient client = HttpClientSupport.getHttpClient();
 
                 LOG.info( "Posting definition to " + uri );
-                client.execute(post);
-                UISupport.showInfoMessage("API published successfully");
-                if( browse ){
-                    Tools.openURL( PluginConfig.SWAGGERHUB_URL + "/api/" + groupId + "/" + apiId + "/" + versionId);
+                HttpResponse response = client.execute(post);
+                if( response.getStatusLine().getStatusCode() == 201 ) {
+                    UISupport.showInfoMessage("API published successfully");
+                    if (browse) {
+                        Tools.openURL(PluginConfig.SWAGGERHUB_URL + "/api/" + groupId + "/" + apiId + "/" + versionId);
+                    }
+                }
+                else {
+                   UISupport.showErrorMessage( "Failed to publish API; " + response.getStatusLine().toString());
                 }
 
                 settings.setString(SWAGGER_HUB_API_KEY, remember ? apikey : "");
@@ -80,16 +87,16 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
 
     @AForm(name = "Publish Swagger Definition", description = "Publishes a Swagger 2.0 definition for selected REST API to the SwaggerHub")
     public interface Form {
-        @AField(name = "Group ID", description = "The id of the Group that this API will be published under", type = AField.AFieldType.STRING)
-        public final static String GROUP_ID = "Group ID";
+        @AField(name = "Owner", description = "The owner that this API will belong to", type = AField.AFieldType.STRING)
+        public final static String GROUP_ID = "Owner";
 
-        @AField(name = "API ID", description = "A unique identifier for this API", type = AField.AFieldType.STRING)
-        public final static String API_ID = "API ID";
+        @AField(name = "Name", description = "A unique identifier for this API", type = AField.AFieldType.STRING)
+        public final static String API_ID = "Name";
 
         @AField(name = "Version", description = "The verions of this API", type = AField.AFieldType.STRING)
         public final static String VERSION = "Version";
 
-        @AField(name = "Open in Browser", description = "Check to open this API on SwaggerHub after publishing", type = AField.AFieldType.BOOLEAN)
+        @AField(name = "Open in Browser", description = "Opens this API on SwaggerHub after publishing", type = AField.AFieldType.BOOLEAN)
         public final static String BROWSE = "Open in Browser";
 
         @AField(name = "API Key", description = "Your SwaggerHub API Key", type = AField.AFieldType.PASSWORD)
