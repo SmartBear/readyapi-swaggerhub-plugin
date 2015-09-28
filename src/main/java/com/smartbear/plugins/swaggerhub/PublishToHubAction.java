@@ -31,7 +31,7 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
     private XFormDialog dialog;
 
     public PublishToHubAction() {
-        super("Publish to SwaggerHub", "Publishes this API to the SwaggerHub");
+        super("Publish to SwaggerHub", "Publishes this API to SwaggerHub");
     }
 
     public void perform(RestService restService, Object o) {
@@ -87,19 +87,19 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
 
     @AForm(name = "Publish Swagger Definition", description = "Publishes a Swagger 2.0 definition for selected REST API to the SwaggerHub")
     public interface Form {
-        @AField(name = "Owner", description = "The owner that this API will belong to", type = AField.AFieldType.STRING)
+        @AField(name = "Owner", description = "The name of your account at SwaggerHub", type = AField.AFieldType.STRING)
         public final static String GROUP_ID = "Owner";
 
-        @AField(name = "Name", description = "A unique identifier for this API", type = AField.AFieldType.STRING)
+        @AField(name = "Name", description = "A unique identifier for this API (min 3 alphanum characters)", type = AField.AFieldType.STRING)
         public final static String API_ID = "Name";
 
-        @AField(name = "Version", description = "The verions of this API", type = AField.AFieldType.STRING)
+        @AField(name = "Version", description = "The version of this API", type = AField.AFieldType.STRING)
         public final static String VERSION = "Version";
 
         @AField(name = "Open in Browser", description = "Opens this API on SwaggerHub after publishing", type = AField.AFieldType.BOOLEAN)
         public final static String BROWSE = "Open in Browser";
 
-        @AField(name = "API Key", description = "Your SwaggerHub API Key", type = AField.AFieldType.PASSWORD)
+        @AField(name = "API Key", description = "Your SwaggerHub API Key (from the Settings page)", type = AField.AFieldType.PASSWORD)
         public final static String APIKEY = "API Key";
 
         @AField(name = "Remember", description = "Save the API key for future actions", type = AField.AFieldType.BOOLEAN )

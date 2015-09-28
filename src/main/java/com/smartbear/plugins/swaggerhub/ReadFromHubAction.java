@@ -35,7 +35,7 @@ public class ReadFromHubAction extends AbstractSoapUIAction<WsdlProject> {
     List<ApiDescriptor> apis = new ArrayList<>();
 
     public ReadFromHubAction() {
-        super("Import from SwaggerHub", "Reads an API from the SwaggerHub");
+        super("Import from SwaggerHub", "Reads an API from SwaggerHub");
     }
 
     public void perform(WsdlProject wsdlProject, Object o) {
@@ -74,7 +74,7 @@ public class ReadFromHubAction extends AbstractSoapUIAction<WsdlProject> {
 
         String query = dialog.getValue( Form.QUERY );
         if(StringUtils.isNotBlank(query)){
-            uri += "&" + URLEncoder.encode( query.trim());
+            uri += "&query=" + URLEncoder.encode( query.trim());
         }
 
         LOG.debug( "Reading APIs from uri" );
