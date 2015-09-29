@@ -119,13 +119,13 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         @AField(name = "Version", description = "The version of this API", type = AField.AFieldType.STRING)
         public final static String VERSION = "Version";
 
-        @AField(name = "Open in Browser", description = "Opens this API on SwaggerHub after publishing", type = AField.AFieldType.BOOLEAN)
-        public final static String BROWSE = "Open in Browser";
-
         @AField(name = "API Key", description = "Your SwaggerHub API Key (from the Settings page)", type = AField.AFieldType.PASSWORD)
         public final static String APIKEY = "API Key";
 
         @AField(name = "Remember", description = "Save the API key for future actions", type = AField.AFieldType.BOOLEAN)
         public final static String REMEMBER = "Remember";
+
+        @AField(name = "Open in Browser", description = "Opens this API on SwaggerHub after publishing", type = AField.AFieldType.BOOLEAN)
+        public final static String BROWSE = "Open in Browser";
     }
 }
