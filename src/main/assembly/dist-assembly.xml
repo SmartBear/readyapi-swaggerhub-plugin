@@ -30,18 +30,6 @@
                 <include>com.smartbear:readyapi-swaggerhub-plugin</include>
             </includes>
         </dependencySet>
-        <dependencySet>
-            <unpack>true</unpack>
-            <unpackOptions>
-                <excludes>
-                    <exclude>com/smartbear/swagger/PluginConfig.class</exclude>
-                </excludes>
-            </unpackOptions>
-            <outputDirectory>/</outputDirectory>
-            <includes>
-                <include>com.smartbear:soapui-swagger-plugin</include>
-            </includes>
-        </dependencySet>
     </dependencySets>
     <fileSets>
         <fileSet>
