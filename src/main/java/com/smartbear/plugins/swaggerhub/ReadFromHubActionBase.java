@@ -1,6 +1,7 @@
 package com.smartbear.plugins.swaggerhub;
 
 import com.eviware.soapui.analytics.Analytics;
+import com.eviware.soapui.impl.rest.RestService;
 import com.eviware.soapui.impl.wsdl.AbstractWsdlModelItem;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
 import com.eviware.soapui.impl.wsdl.support.http.HttpClientSupport;
@@ -16,6 +17,7 @@ import com.eviware.x.form.XFormOptionsField;
 import com.eviware.x.form.support.ADialogBuilder;
 import com.eviware.x.form.support.AField;
 import com.eviware.x.form.support.AForm;
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.smartbear.swagger.Swagger2Importer;
 import org.apache.commons.lang.StringUtils;
@@ -29,6 +31,7 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 abstract public class  ReadFromHubActionBase<T extends ModelItem> extends AbstractSoapUIAction<T> {
@@ -59,18 +62,25 @@ abstract public class  ReadFromHubActionBase<T extends ModelItem> extends Abstra
                 if (indexes.length == 0) {
                     UISupport.showErrorMessage("Select one or more APIs to import.");
                 } else {
-                    XProgressDialog progressDialog = UISupport.getDialogs().createProgressDialog("Importing definitions from SwaggerHub", 0, "Importing...", false);
+                    final List<RestService> result = Lists.newArrayList();
+                    final XProgressDialog progressDialog = UISupport.getDialogs().createProgressDialog(
+                            "Importing definition" + (indexes.length == 1?"":"s") + " from SwaggerHub", 0, "Importing...", false);
+
                     progressDialog.run(new Worker.WorkerAdapter() {
                         @Override
                         public Object construct(XProgressMonitor xProgressMonitor) {
                             try {
-                                importApis(getProjectForModelItem(modelItem), indexes);
+                                result.addAll(importApis(getProjectForModelItem(modelItem), indexes));
                             } catch (SoapUIException e) {
                                 UISupport.showErrorMessage(e);
                             }
                             return null;
                         }
                     });
+
+                    if( !result.isEmpty()){
+                        UISupport.selectAndShow( result.get(0));
+                    }
                 }
             }
 
@@ -79,15 +89,17 @@ abstract public class  ReadFromHubActionBase<T extends ModelItem> extends Abstra
         }
     }
 
-    private void importApis(WsdlProject wsdlProject, int[] indexes) {
+    private List<RestService> importApis(WsdlProject wsdlProject, int[] indexes) {
         Swagger2Importer importer = new Swagger2Importer(wsdlProject);
+        List<RestService> result = Lists.newArrayList();
         for (int c = 0; c < indexes.length; c++) {
             String swaggerUrl = apis.get(indexes[c]).swaggerUrl;
             System.out.println("Attempting to import Swagger from [" + swaggerUrl + "]");
-            importer.importSwagger(swaggerUrl);
+            Collections.addAll(result, importer.importSwagger(swaggerUrl));
             Analytics.trackAction("ImportFromSwaggerHubAction");
-
         }
+
+        return result;
     }
 
     private XFormOptionsField populateList() throws IOException {
