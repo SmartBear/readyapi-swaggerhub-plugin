@@ -108,24 +108,24 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         }
     }
 
-    @AForm(name = "Publish Swagger Definition", description = "Publishes a Swagger 2.0 definition for selected REST API to the SwaggerHub")
+    @AForm(name = "Publish Definition to SwaggerHub", description = "Publishes the selected REST definition to SwaggerHub (in the Swagger 2.0 format).")
     public interface Form {
-        @AField(name = "Owner", description = "The name of your account at SwaggerHub", type = AField.AFieldType.STRING)
+        @AField(name = "Owner", description = "Your SwaggerHub account.", type = AField.AFieldType.STRING)
         public final static String GROUP_ID = "Owner";
 
-        @AField(name = "Name", description = "A unique identifier for this API (min 3 alphanum characters)", type = AField.AFieldType.STRING)
-        public final static String API_ID = "Name";
+        @AField(name = "Unique API name", description = "The API identifier at SwaggerHub (letters, digits or spaces, 3 chars min).", type = AField.AFieldType.STRING)
+        public final static String API_ID = "Unique API name";
 
-        @AField(name = "Version", description = "The version of this API", type = AField.AFieldType.STRING)
+        @AField(name = "Version", description = "The version of this API.", type = AField.AFieldType.STRING)
         public final static String VERSION = "Version";
 
-        @AField(name = "API Key", description = "Your SwaggerHub API Key (from the Settings page)", type = AField.AFieldType.PASSWORD)
-        public final static String APIKEY = "API Key";
+        @AField(name = "API key", description = "Your SwaggerHub API Key (from SwaggerHub's Settings page).", type = AField.AFieldType.PASSWORD)
+        public final static String APIKEY = "API key";
 
-        @AField(name = "Remember", description = "Save the API key for future actions", type = AField.AFieldType.BOOLEAN)
-        public final static String REMEMBER = "Remember";
+        @AField(name = "Remember the key", description = "Save the API key for future actions.", type = AField.AFieldType.BOOLEAN)
+        public final static String REMEMBER = "Remember the key";
 
-        @AField(name = "Open in Browser", description = "Opens this API on SwaggerHub after publishing", type = AField.AFieldType.BOOLEAN)
-        public final static String BROWSE = "Open in Browser";
+        @AField(name = "Open after publishing", description = "Opens this API on SwaggerHub after publishing", type = AField.AFieldType.BOOLEAN)
+        public final static String BROWSE = "Open after publishing";
     }
 }

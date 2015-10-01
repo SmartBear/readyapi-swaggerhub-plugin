@@ -8,7 +8,7 @@ import com.eviware.soapui.support.SoapUIException;
 public class ReadFromHubAction extends ReadFromHubActionBase<WsdlProject> {
 
     public ReadFromHubAction() {
-        super("Import from SwaggerHub", "Reads an API from SwaggerHub");
+        super("Import From SwaggerHub", "Reads an API from SwaggerHub");
     }
 
     @Override
