@@ -57,9 +57,9 @@ abstract public class  ReadFromHubActionBase<T extends ModelItem> extends Abstra
 
                 final int[] indexes = field.getSelectedIndexes();
                 if (indexes.length == 0) {
-                    UISupport.showErrorMessage("You need to select at least on API");
+                    UISupport.showErrorMessage("Select one or more APIs to import.");
                 } else {
-                    XProgressDialog progressDialog = UISupport.getDialogs().createProgressDialog("Import from SwaggerHub", 0, "Importing...", false);
+                    XProgressDialog progressDialog = UISupport.getDialogs().createProgressDialog("Importing definitions from SwaggerHub", 0, "Importing...", false);
                     progressDialog.run(new Worker.WorkerAdapter() {
                         @Override
                         public Object construct(XProgressMonitor xProgressMonitor) {
@@ -114,16 +114,16 @@ abstract public class  ReadFromHubActionBase<T extends ModelItem> extends Abstra
         return field;
     }
 
-    @AForm(name = "Import Swagger Definition", description = "Imports a Swagger definition from the SwaggerHub")
+    @AForm(name = "Import Definition From SwaggerHub", description = "Imports a Swagger definition from SwaggerHub.")
     public interface Form {
-        @AField(name = "Query", description = "keywords to search on", type = AField.AFieldType.STRING)
-        public final static String QUERY = "Query";
+        @AField(name = "Search in API name", description = "A substring to search for in API names.", type = AField.AFieldType.STRING)
+        public final static String QUERY = "Search in API name";
 
-        @AField(name = "Search", description = "Update list of APIs", type = AField.AFieldType.ACTION)
+        @AField(name = "Search", description = "Update the Available APIs list.", type = AField.AFieldType.ACTION)
         public final static String SEARCH = "Search";
 
-        @AField(name = "APIs", description = "Select which Swagger APIs to import", type = AField.AFieldType.MULTILIST)
-        public final static String APIS = "APIs";
+        @AField(name = "Available APIs", description = "Select the APIs to import.", type = AField.AFieldType.MULTILIST)
+        public final static String APIS = "Available APIs";
     }
 
     private class SearchAction extends AbstractAction {
