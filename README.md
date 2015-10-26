@@ -20,9 +20,12 @@ There are two ways to bring an API into Ready! API from SwaggerHub:
  
 In SoapUI, you import APIs from SwaggerHub to existing projects. To do this, right-click your project in the Navigator and select *Import from SwaggerHub* from the context menu.
   
-After you choose SwaggerHub as the source for the API definition, a dialog box displays with the list of APIs available in the SwaggerHub Registry. You can choose one or more APIs to import. If you want to narrow down the list, enter a search string in the Query box and click Search. 
-
-After you select the APIs to import, Ready! API (or SoapUI) reads in the Swagger definition and creates the API in your Projects list. You can then use those APIs to generate functional, load, and security tests. You can also use them as the basis for creating virtual APIs.
+After you choose SwaggerHub as the source for the API definition, a dialog box displays with the list of APIs available 
+in the SwaggerHub Registry. If you want to narrow down the list, enter a search string in the Query box and click Search.
+When you select an API its available versions are shown in the list below - select which version you want to import and 
+press the OK button at the bottom of the dialog, the corresponding Swagger definition will be read from SwaggerHub and 
+imported as an API into your project. You can then use those APIs to generate functional, load, and security tests. 
+You can also use them as the basis for creating virtual APIs.
 
 ###Publishing an API to SwaggerHub
 

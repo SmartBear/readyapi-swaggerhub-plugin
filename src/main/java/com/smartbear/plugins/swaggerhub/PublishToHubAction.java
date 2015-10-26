@@ -18,6 +18,7 @@ import com.eviware.x.form.support.AForm;
 import com.google.common.io.Files;
 import com.smartbear.swagger.Swagger2Exporter;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -77,20 +78,28 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         boolean browse = dialog.getBooleanValue(Form.BROWSE);
         boolean remember = dialog.getBooleanValue(Form.REMEMBER);
 
+        String uri = PluginConfig.SWAGGERHUB_API + "/" + groupId + "/" + apiId;
+        DefaultHttpClient client = HttpClientSupport.getHttpClient();
+
+        HttpGet get = new HttpGet( uri + "/" + versionId );
+        HttpResponse response = client.execute( get );
+        if( response.getStatusLine().getStatusCode() == 200 ){
+            if(!UISupport.confirm( "API Version [" + versionId + "] already exists at SwaggerHub - Overwrite?",
+                    "Publish to SwaggerHub")){
+                return false;
+            }
+        }
+
         String result = exporter.exportToFolder(Files.createTempDir().getAbsolutePath(),
                 versionId, "json", new RestService[]{restService}, restService.getBasePath());
 
-        LOG.info("Created temporary swagger definition at " + result);
-
-        String uri = PluginConfig.SWAGGERHUB_API + "/" + groupId + "/" + apiId;
+        LOG.info("Created temporary Swagger definition at " + result);
         HttpPost post = new HttpPost(uri);
         post.setEntity(new FileEntity(new File(result, "api-docs.json"), "application/json"));
         post.addHeader("Authorization", apikey);
 
-        DefaultHttpClient client = HttpClientSupport.getHttpClient();
-
         LOG.info("Posting definition to " + uri);
-        HttpResponse response = client.execute(post);
+        response = client.execute(post);
 
         restService.getProject().getWorkspace().getSettings().setString(SWAGGER_HUB_API_KEY, remember ? apikey : "");
 
