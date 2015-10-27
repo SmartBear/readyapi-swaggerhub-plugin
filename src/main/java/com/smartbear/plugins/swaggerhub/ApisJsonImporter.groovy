@@ -16,6 +16,9 @@ class ApisJsonImporter {
                 if (prop.type == "Swagger") {
                     descriptor.swaggerUrl = prop.url
                 }
+                else if( prop.type == "X-Versions" ){
+                    descriptor.versions = prop.value.split(',')
+                }
             }
 
             result.add(descriptor)
@@ -29,9 +32,11 @@ class ApiDescriptor {
     public String name
     public String description
     public String swaggerUrl
+    public String [] versions
 
     @Override
     String toString() {
-        return name
+        return name + " - " + description + ((description.length()>0)?" ":"") +
+                "[" + versions.length + " version" + ((versions.length==1)?"]":"s]")
     }
 }
