@@ -79,7 +79,7 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         boolean remember = dialog.getBooleanValue(Form.REMEMBER);
 
         String uri = PluginConfig.SWAGGERHUB_API + "/" + groupId + "/" + apiId;
-        DefaultHttpClient client = HttpClientSupport.getHttpClient();
+        HttpClientSupport.SoapUIHttpClient client = HttpClientSupport.getHttpClient();
 
         HttpGet get = new HttpGet( uri + "/" + versionId );
         HttpResponse response = client.execute( get );
