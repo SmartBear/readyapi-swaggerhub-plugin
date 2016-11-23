@@ -7,6 +7,8 @@ class ApisJsonImporter {
         def apisJson = new JsonSlurper().parseText(json)
         def result = new ArrayList<ApiDescriptor>()
 
+        def basePath = Utils.swaggerHubApiBasePath;
+
         apisJson.apis.each { it ->
             def descriptor = new ApiDescriptor()
             descriptor.name = it.name
@@ -15,6 +17,13 @@ class ApisJsonImporter {
             it.properties.each { prop ->
                 if (prop.type == "Swagger") {
                     descriptor.swaggerUrl = prop.url
+
+                    def ix = descriptor.swaggerUrl.indexOf( basePath )
+                    def ix2 = descriptor.swaggerUrl.indexOf( '/', ix + basePath.length()+1 )
+
+                    if( ix2 > 0 ){
+                        descriptor.owner = descriptor.swaggerUrl.substring( basePath.length()+1, ix2 )
+                    }
                 }
                 else if( prop.type == "X-Versions" ){
                     descriptor.versions = prop.value.split(',')
@@ -29,6 +38,7 @@ class ApisJsonImporter {
 }
 
 class ApiDescriptor {
+    public String owner
     public String name
     public String description
     public String swaggerUrl
@@ -36,7 +46,8 @@ class ApiDescriptor {
 
     @Override
     String toString() {
-        return name + " - " + description + ((description.length()>0)?" ":"") +
-                "[" + versions.length + " version" + ((versions.length==1)?"]":"s]")
+        return owner + "/" + name + ", " +
+                "[" + versions.length + " version" + ((versions.length==1)?"]":"s] ") +
+                description
     }
 }

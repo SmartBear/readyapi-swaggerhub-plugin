@@ -25,12 +25,11 @@ import com.smartbear.swagger.Swagger2Importer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.jdesktop.swingx.JXList;
+import org.jdesktop.swingx.JXTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.AbstractAction;
-import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.event.ListSelectionEvent;
@@ -45,8 +44,8 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
 
     private final static Logger LOG = LoggerFactory.getLogger(ReadFromHubActionBase.class);
     private XFormDialog dialog;
-    private DefaultListModel apis = new DefaultListModel();
-    private JXList apisList;
+    private JXTable apisList;
+    private ApisTableModel apisTableModel = new ApisTableModel();
 
     public ReadFromHubActionBase(String name, String description) {
         super(name, description);
@@ -73,14 +72,14 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
         }
 
         try {
-            populateList();
+            populateApiList();
 
             while (dialog.show()) {
 
                 XFormOptionsField versionsField = ((XFormOptionsField) dialog.getFormField(Form.VERSIONS));
 
                 final int[] versions = versionsField.getSelectedIndexes();
-                final int apiIndex = apisList.getSelectedIndex();
+                final int apiIndex = apisList.getSelectedRow();
 
                 if (versions.length == 0 || apiIndex == -1) {
                     UISupport.showErrorMessage("Select an API version to import");
@@ -114,8 +113,8 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
     }
 
     private JComponent buildApisListComponent() {
-        apisList = new JXList(apis);
-        apisList.addListSelectionListener(new ListSelectionListener() {
+        apisList = new JXTable(apisTableModel);
+        apisList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 updateVersions();
@@ -126,13 +125,13 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
     }
 
     private void updateVersions() {
-        int index = apisList.getSelectedIndex();
+        int index = apisList.getSelectedRow();
         XFormOptionsField versionsField = ((XFormOptionsField) dialog.getFormField(Form.VERSIONS));
 
         StringList versions = new StringList();
         if (index >= 0) {
 
-            for (String v : ((ApiDescriptor) apis.get(index)).versions) {
+            for (String v : apisTableModel.getApiAtRow(index).versions) {
                 if (v.startsWith("*")) {
                     v = v.substring(1).trim() + " - published";
                 }
@@ -146,7 +145,7 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
 
     private List<RestService> importApis(WsdlProject wsdlProject, int apiIndex, int [] versions) {
 
-        ApiDescriptor descriptor = (ApiDescriptor) apis.get(apiIndex);
+        ApiDescriptor descriptor = apisTableModel.getApiAtRow(apiIndex);
 
         Swagger2Importer importer = new Swagger2Importer(wsdlProject);
         List<RestService> result = Lists.newArrayList();
@@ -170,9 +169,9 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
         return result;
     }
 
-    private void populateList() throws IOException {
-        apis.clear();
-        String uri = PluginConfig.SWAGGERHUB_API + "?limit=50";
+    private void populateApiList() throws IOException {
+
+        String uri = Utils.getSwaggerHubApiBasePath() + "?limit=50";
 
         String query = dialog.getValue(Form.QUERY);
         if (StringUtils.isNotBlank(query)) {
@@ -182,16 +181,14 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
         LOG.debug("Reading APIs from uri");
 
         HttpGet get = new HttpGet(uri);
+        Utils.addApiKeyIfConfigured(get);
+
         HttpResponse response = HttpClientSupport.getHttpClient().execute(get);
 
         LOG.debug("Got APIs, parsing...");
 
-        List<ApiDescriptor> descriptors = new ApisJsonImporter().importApis(
-                new String(ByteStreams.toByteArray(response.getEntity().getContent())));
-
-        for (ApiDescriptor descriptor : descriptors) {
-            apis.addElement(descriptor);
-        }
+        apisTableModel.setApis( new ApisJsonImporter().importApis(
+                new String(ByteStreams.toByteArray(response.getEntity().getContent()))));
     }
 
     @AForm(name = "Import Definition From SwaggerHub", description = "Imports a Swagger definition from SwaggerHub.")
@@ -219,7 +216,7 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
         public void actionPerformed(ActionEvent e) {
             try {
                 UISupport.setHourglassCursor();
-                populateList();
+                populateApiList();
             } catch (IOException e1) {
                 UISupport.showErrorMessage(e1);
             } finally {

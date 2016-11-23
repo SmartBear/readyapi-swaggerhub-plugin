@@ -24,7 +24,7 @@ import com.eviware.soapui.support.SoapUIException;
 @PluginImportMethod(label = "SwaggerHub")
 public class CreateSwaggerProjectAction extends ReadFromHubActionBase<WorkspaceImpl> {
     public CreateSwaggerProjectAction() {
-        super("Create Swagger Project", "Creates a new SoapUI Project from a Swagger definition");
+        super("Create Swagger Project", "Creates a new Project from a Swagger definition");
     }
 
     @Override

@@ -21,12 +21,13 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.FileEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+
+import static com.smartbear.plugins.swaggerhub.Utils.getSwaggerHubApiBasePath;
 
 @ActionConfiguration(actionGroup = "RestServiceActions", separatorBefore = true)
 public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
@@ -78,10 +79,12 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         boolean browse = dialog.getBooleanValue(Form.BROWSE);
         boolean remember = dialog.getBooleanValue(Form.REMEMBER);
 
-        String uri = PluginConfig.SWAGGERHUB_API + "/" + groupId + "/" + apiId;
+        String uri = getSwaggerHubApiBasePath() + "/" + groupId + "/" + apiId;
         HttpClientSupport.SoapUIHttpClient client = HttpClientSupport.getHttpClient();
 
         HttpGet get = new HttpGet( uri + "/" + versionId );
+        Utils.addApiKeyIfConfigured(get);
+
         HttpResponse response = client.execute( get );
         if( response.getStatusLine().getStatusCode() == 200 ){
             if(!UISupport.confirm( "API Version [" + versionId + "] already exists at SwaggerHub - Overwrite?",
@@ -95,6 +98,8 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
 
         LOG.info("Created temporary Swagger definition at " + result);
         HttpPost post = new HttpPost(uri);
+        Utils.addApiKeyIfConfigured(post);
+
         post.setEntity(new FileEntity(new File(result, "api-docs.json"), "application/json"));
         post.addHeader("Authorization", apikey);
 
