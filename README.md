@@ -1,18 +1,18 @@
-## Ready! API/SoapUI SwaggerHub Plugin
+## ReadyAPI/SoapUI SwaggerHub Plugin
 
-Welcome to the Ready! API/SoapUI plugin for SwaggerHub. This plugin allows you to:
+Welcome to the ReadyAPI/SoapUI plugin for SwaggerHub. This plugin allows you to:
 
 *import a Swagger definition from SwaggerHub
-*publish an API from Ready! API to SwaggerHub
+*publish an API from ReadyAPI to SwaggerHub
 
-Note: the instructions below are for Ready! API but the plugin is also available in SoapUI and works in a similar fashion.
+Note: the instructions below are for ReadyAPI but the plugin is also available in SoapUI and works in a similar fashion.
 
 ###Importing an API from SwaggerHub
 
 There are two ways to bring an API into Ready! API from SwaggerHub:
 
 * Create New Project: 
-  * From Ready! API's main menu, select *File > New Project*.
+  * From ReadyAPI's main menu, select *File > New Project*.
   * In the subsequent dialog, select *Create new project from* and then choose *SwaggerHub* from the drop-down.
 * Add to Existing Project:
   * In the Navigator view, right-click the desired project.
@@ -37,7 +37,7 @@ When you have completed your testing and are ready to publish the API in the Swa
 * API Key - you can generate this key in your User Settings in SwaggerHub
 * Actions to take: Save API Key and Open in Browser after publishing
 
-After you specified the parameter values, click *OK*. Ready! API (or SoapUI) will export your API definition to SwaggerHub.
+After you specified the parameter values, click *OK*. ReadyAPI (or SoapUI) will export your API definition to SwaggerHub.
 
 
 
