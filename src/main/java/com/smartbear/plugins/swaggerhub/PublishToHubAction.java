@@ -1,8 +1,7 @@
 package com.smartbear.plugins.swaggerhub;
 
-import com.eviware.soapui.impl.rest.AbstractRestService;
+import com.eviware.soapui.analytics.Analytics;
 import com.eviware.soapui.impl.rest.RestService;
-import com.eviware.soapui.impl.wsdl.WsdlProject;
 import com.eviware.soapui.impl.wsdl.support.http.HttpClientSupport;
 import com.eviware.soapui.model.settings.Settings;
 import com.eviware.soapui.plugins.ActionConfiguration;
@@ -17,17 +16,17 @@ import com.eviware.x.form.support.ADialogBuilder;
 import com.eviware.x.form.support.AField;
 import com.eviware.x.form.support.AForm;
 import com.google.common.io.Files;
+import com.smartbear.swagger.Swagger2Exporter;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.FileEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 
 @ActionConfiguration(actionGroup = "RestServiceActions", separatorBefore = true)
 public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
@@ -49,7 +48,7 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         }
 
         final boolean[] finished = {false};
-        while (!finished[0] && dialog.show()) {
+        while( !finished[0] && dialog.show()){
             XProgressDialog progressDialog = UISupport.getDialogs().createProgressDialog("Publish to SwaggerHub", 0, "Importing...", false);
             try {
                 progressDialog.run(new Worker.WorkerAdapter() {
@@ -70,68 +69,52 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
     }
 
     private boolean publishApi(RestService restService) throws IOException {
-        //Swagger2Exporter exporter = new Swagger2Exporter(restService.getProject());
+        Swagger2Exporter exporter = new Swagger2Exporter(restService.getProject());
 
-        try {
-            String apikey = dialog.getValue(Form.APIKEY);
-            String groupId = dialog.getValue(Form.GROUP_ID);
-            String apiId = dialog.getValue(Form.API_ID);
-            String versionId = dialog.getValue(Form.VERSION);
-            boolean browse = dialog.getBooleanValue(Form.BROWSE);
-            boolean remember = dialog.getBooleanValue(Form.REMEMBER);
+        String apikey = dialog.getValue(Form.APIKEY);
+        String groupId = dialog.getValue(Form.GROUP_ID);
+        String apiId = dialog.getValue(Form.API_ID);
+        String versionId = dialog.getValue(Form.VERSION);
+        boolean browse = dialog.getBooleanValue(Form.BROWSE);
+        boolean remember = dialog.getBooleanValue(Form.REMEMBER);
 
-            String uri = PluginConfig.SWAGGERHUB_API + "/" + groupId + "/" + apiId;
-            CloseableHttpClient client = HttpClientSupport.getHttpClient();
+        String uri = PluginConfig.SWAGGERHUB_API + "/" + groupId + "/" + apiId;
+        DefaultHttpClient client = HttpClientSupport.getHttpClient();
 
-            HttpGet get = new HttpGet(uri + "/" + versionId);
-            HttpResponse response = client.execute(get);
-            if (response.getStatusLine().getStatusCode() == 200) {
-                if (!UISupport.confirm("API Version [" + versionId + "] already exists at SwaggerHub - Overwrite?",
-                        "Publish to SwaggerHub")) {
-                    return false;
-                }
-            }
-
-            Class exporterClass = Class.forName("com.smartbear.swagger.Swagger2Exporter");
-            Object exporter = exporterClass.getConstructor(WsdlProject.class).newInstance(restService.getProject());
-
-            Method method;
-            try {
-                method = exporterClass.getMethod("exportToFolder", String.class, String.class, String.class, RestService[].class, String.class);
-            } catch (NoSuchMethodException e) {
-                method = exporterClass.getMethod("exportToFolder", String.class, String.class, String.class, AbstractRestService[].class, String.class);
-            }
-
-            String result = (String) method.invoke(exporter, Files.createTempDir().getAbsolutePath(),
-                    versionId, "json", new RestService[]{restService}, restService.getBasePath());
-
-            LOG.info("Created temporary Swagger definition at " + result);
-            HttpPost post = new HttpPost(uri);
-            post.setEntity(new FileEntity(new File(result, "api-docs.json"), "application/json"));
-            post.addHeader("Authorization", apikey);
-
-            LOG.info("Posting definition to " + uri);
-            response = client.execute(post);
-
-            restService.getProject().getWorkspace().getSettings().setString(SWAGGER_HUB_API_KEY, remember ? apikey : "");
-
-            if (response.getStatusLine().getStatusCode() == 201) {
-                UISupport.showInfoMessage("API published successfully");
-                if (browse) {
-                    Tools.openURL(PluginConfig.SWAGGERHUB_URL + "/api/" + groupId + "/" + apiId + "/" + versionId);
-                }
-
-                Utils.sendAnalytics("ExportToSwaggerHubAction");
-                return true;
-            } else {
-                UISupport.showErrorMessage("Failed to publish API; " + response.getStatusLine().toString());
+        HttpGet get = new HttpGet( uri + "/" + versionId );
+        HttpResponse response = client.execute( get );
+        if( response.getStatusLine().getStatusCode() == 200 ){
+            if(!UISupport.confirm( "API Version [" + versionId + "] already exists at SwaggerHub - Overwrite?",
+                    "Publish to SwaggerHub")){
                 return false;
             }
-        } catch (Exception e) {
-            LOG.error(e.getMessage());
-            e.printStackTrace();
         }
-        return true;
+
+        String result = exporter.exportToFolder(Files.createTempDir().getAbsolutePath(),
+                versionId, "json", new RestService[]{restService}, restService.getBasePath());
+
+        LOG.info("Created temporary Swagger definition at " + result);
+        HttpPost post = new HttpPost(uri);
+        post.setEntity(new FileEntity(new File(result, "api-docs.json"), "application/json"));
+        post.addHeader("Authorization", apikey);
+
+        LOG.info("Posting definition to " + uri);
+        response = client.execute(post);
+
+        restService.getProject().getWorkspace().getSettings().setString(SWAGGER_HUB_API_KEY, remember ? apikey : "");
+
+        if (response.getStatusLine().getStatusCode() == 201) {
+            UISupport.showInfoMessage("API published successfully");
+            if (browse) {
+                Tools.openURL(PluginConfig.SWAGGERHUB_URL + "/api/" + groupId + "/" + apiId + "/" + versionId);
+            }
+
+            Analytics.trackAction("ExportToSwaggerHubAction");
+            return true;
+        } else {
+            UISupport.showErrorMessage("Failed to publish API; " + response.getStatusLine().toString());
+            return false;
+        }
     }
 
     @AForm(name = "Publish Definition to SwaggerHub", description = "Publishes the selected REST definition to SwaggerHub (in the Swagger 2.0 format).")
