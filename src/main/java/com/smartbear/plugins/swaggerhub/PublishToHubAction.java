@@ -127,7 +127,6 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
             }
         } catch (Exception e) {
             LOG.error(e.getMessage());
-            e.printStackTrace();
         }
         return true;
     }
