@@ -70,8 +70,6 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
     }
 
     private boolean publishApi(RestService restService) throws IOException {
-        //Swagger2Exporter exporter = new Swagger2Exporter(restService.getProject());
-
         try {
             String apikey = dialog.getValue(Form.APIKEY);
             String groupId = dialog.getValue(Form.GROUP_ID);
