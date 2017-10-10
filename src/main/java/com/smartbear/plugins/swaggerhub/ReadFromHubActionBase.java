@@ -1,7 +1,5 @@
 package com.smartbear.plugins.swaggerhub;
 
-import com.eviware.soapui.analytics.Analytics;
-import com.eviware.soapui.impl.rest.RestService;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
 import com.eviware.soapui.impl.wsdl.support.http.HttpClientSupport;
 import com.eviware.soapui.model.ModelItem;
@@ -21,7 +19,7 @@ import com.eviware.x.form.support.AField;
 import com.eviware.x.form.support.AForm;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
-import com.smartbear.swagger.Swagger2Importer;
+import com.smartbear.ready.core.module.ModuleType;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -37,7 +35,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -67,7 +67,7 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
             versionsField.addFormFieldListener(new XFormFieldListener() {
                 @Override
                 public void valueChanged(XFormField xFormField, String s, String s1) {
-                   dialog.getActionsList().getActionAt(0).setEnabled(versionsField.getSelectedIndexes().length>0);
+                    dialog.getActionsList().getActionAt(0).setEnabled(versionsField.getSelectedIndexes().length > 0);
                 }
             });
         }
@@ -81,36 +81,58 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
 
                 final int[] versions = versionsField.getSelectedIndexes();
                 final int apiIndex = apisList.getSelectedIndex();
+                final WsdlProject project = getProjectForModelItem(modelItem);
 
                 if (versions.length == 0 || apiIndex == -1) {
                     UISupport.showErrorMessage("Select an API version to import");
                 } else {
-                    final List<RestService> result = Lists.newArrayList();
+                    final List<Object> result = Lists.newArrayList();
                     final XProgressDialog progressDialog = UISupport.getDialogs().createProgressDialog(
                             "Importing definition from SwaggerHub", 0, "Importing...", false);
 
                     progressDialog.run(new Worker.WorkerAdapter() {
                         @Override
                         public Object construct(XProgressMonitor xProgressMonitor) {
-                            try {
-                                result.addAll(importApis(getProjectForModelItem(modelItem), apiIndex, versions));
-                            } catch (SoapUIException e) {
-                                UISupport.showErrorMessage(e);
-                            }
+                            result.addAll(importApis(project, apiIndex, versions));
+
                             return null;
                         }
                     });
-
                     if (!result.isEmpty()) {
-                        UISupport.selectAndShow(result.get(0));
+                        UISupport.selectAndShow(project, ModuleType.PROJECTS.getId());
                         break;
                     }
                 }
             }
-
         } catch (Exception e) {
             UISupport.showErrorMessage(e);
         }
+    }
+
+    private List<Object> importApis(WsdlProject wsdlProject, int apiIndex, int[] versions) {
+        List<Object> result = new ArrayList<>();
+        try {
+            Class importerClass = Class.forName("com.smartbear.swagger.Swagger2Importer");
+            Object importer = importerClass.getConstructor(WsdlProject.class).newInstance(wsdlProject);
+            Method method = importerClass.getMethod("importSwagger", String.class);
+
+            ApiDescriptor descriptor = (ApiDescriptor) apis.get(apiIndex);
+            String swaggerUrl = descriptor.swaggerUrl;
+
+            for (int versionIndex : versions) {
+                String version = descriptor.versions[versionIndex];
+                if (version.startsWith("*")) {
+                    version = version.substring(1).trim();
+                }
+
+                String url = swaggerUrl.substring(0, swaggerUrl.lastIndexOf('/')) + "/" + version;
+                System.out.println("Attempting to import Swagger from [" + url + "]");
+                Collections.addAll(result, method.invoke(importer, swaggerUrl));
+            }
+        } catch (Exception e) {
+            LOG.error(e.toString());
+        }
+        return result;
     }
 
     private JComponent buildApisListComponent() {
@@ -142,32 +164,6 @@ abstract public class ReadFromHubActionBase<T extends ModelItem> extends Abstrac
         }
 
         versionsField.setOptions(versions.toStringArray());
-    }
-
-    private List<RestService> importApis(WsdlProject wsdlProject, int apiIndex, int [] versions) {
-
-        ApiDescriptor descriptor = (ApiDescriptor) apis.get(apiIndex);
-
-        Swagger2Importer importer = new Swagger2Importer(wsdlProject);
-        List<RestService> result = Lists.newArrayList();
-        String swaggerUrl = descriptor.swaggerUrl;
-
-        for( int versionIndex : versions ) {
-
-            String version = descriptor.versions[versionIndex];
-            if (version.startsWith("*")) {
-                version = version.substring(1).trim();
-            }
-
-            String url = swaggerUrl.substring(0, swaggerUrl.lastIndexOf('/')) + "/" + version;
-
-            System.out.println("Attempting to import Swagger from [" + url + "]");
-            Collections.addAll(result, importer.importSwagger(url));
-        }
-
-        Analytics.trackAction("ImportFromSwaggerHubAction");
-
-        return result;
     }
 
     private void populateList() throws IOException {
