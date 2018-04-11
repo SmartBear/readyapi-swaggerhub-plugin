@@ -262,7 +262,7 @@ public class ImportFromHubDialog extends Dialog {
         gridPane.add(ownerLabel, 0, 2);
         gridPane.add(ownerField, 1, 2);
 
-        Label rememberLabel = createLabel("Remember");
+        Label rememberLabel = createLabel("Remember me");
 
         gridPane.add(rememberLabel, 0, 3);
         gridPane.add(rememberCombo, 1, 3);
