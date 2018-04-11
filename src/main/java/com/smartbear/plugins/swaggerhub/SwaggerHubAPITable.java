@@ -32,11 +32,14 @@ public class SwaggerHubAPITable extends TableView {
         TableColumn visibility = new TableColumn("Visibility");
         visibility.setCellValueFactory(new PropertyValueFactory<SwaggerHubAPITableModel, String>("visibility"));
 
+        TableColumn owner = new TableColumn("Owner");
+        owner.setCellValueFactory(new PropertyValueFactory<SwaggerHubAPITableModel, String>("owner"));
+
         TableColumn versions = new TableColumn("Versions");
         versions.setCellValueFactory(new PropertyValueFactory<SwaggerHubAPITableModel, Object>("versions"));
 
         setItems(tableModels);
-        getColumns().addAll(name, desc, oasVersion, visibility, versions);
+        getColumns().addAll(name, owner, desc, oasVersion, visibility, versions);
     }
 
     public void clearTable() {

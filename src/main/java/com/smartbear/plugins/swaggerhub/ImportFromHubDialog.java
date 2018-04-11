@@ -60,9 +60,9 @@ public class ImportFromHubDialog extends Dialog {
     private static final int CONTENT_PANE_WIDTH = 710;
     private static final int CONTENT_PANE_HEIGHT = 525;
     private final TextField loginField = new TextField();
-    private final TextField ownerField = new TextField();
     private final PasswordField passwordField = new PasswordField();
     private final TextField searchField = new TextField();
+    private final CheckBox searchInMyHub = new CheckBox();
     private String apiKey;
     private final CheckBox rememberCombo = new CheckBox();
     private final SwaggerHubAPITable table = new SwaggerHubAPITable();
@@ -147,7 +147,6 @@ public class ImportFromHubDialog extends Dialog {
             boolean importPrivate = false;
             String login = loginField.getText();
             String password = passwordField.getText();
-            String owner = ownerField.getText();
             String searchQuery = searchField.getText();
 
             String uri;
@@ -158,8 +157,8 @@ public class ImportFromHubDialog extends Dialog {
                 workspace.getSettings().setString(SWAGGER_HUB_PASSWORD, passwordField.getText());
             }
 
-            if (StringUtils.isNotEmpty(login) && StringUtils.isNotEmpty(password) && StringUtils.isNotEmpty(owner)) {
-                uri = PluginConfig.SWAGGERHUB_API + "/" + owner;
+            if (StringUtils.isNotEmpty(login) && StringUtils.isNotEmpty(password) && searchInMyHub.isSelected()) {
+                uri = PluginConfig.SWAGGERHUB_API + "?filter=user";
                 try {
                     getApiKey(password, login);
                 } catch (Exception e) {
@@ -171,11 +170,7 @@ public class ImportFromHubDialog extends Dialog {
             }
 
             if (StringUtils.isNotEmpty(searchQuery)) {
-                if (importPrivate) {
-                    uri += "?query=" + searchQuery;
-                } else {
-                    uri += "&query=" + searchQuery;
-                }
+                uri += "&query=" + searchQuery;
             }
 
             try {
@@ -258,14 +253,14 @@ public class ImportFromHubDialog extends Dialog {
         gridPane.add(passwordLabel, 0, 1);
         gridPane.add(passwordField, 1, 1);
 
-        Label ownerLabel = createLabel("Owner of APIs");
-        gridPane.add(ownerLabel, 0, 2);
-        gridPane.add(ownerField, 1, 2);
-
         Label rememberLabel = createLabel("Remember me");
 
-        gridPane.add(rememberLabel, 0, 3);
-        gridPane.add(rememberCombo, 1, 3);
+        gridPane.add(rememberLabel, 0, 2);
+        gridPane.add(rememberCombo, 1, 2);
+
+        Label searchInMyHubLabel = createLabel("My APIs only");
+        gridPane.add(searchInMyHubLabel, 0, 3);
+        gridPane.add(searchInMyHub, 1, 3);
 
         Label searchLabel = new Label("Search");
         gridPane.add(searchLabel, 0, 4);
@@ -276,7 +271,7 @@ public class ImportFromHubDialog extends Dialog {
 
         setTooltip("Specify your SwaggerHub login", loginField);
         setTooltip("Specify your SwaggerHub password", passwordField);
-        setTooltip("Specify owner of your APIs", ownerField);
+        setTooltip("Show only those APIs that the authenticated user has access to either as owner or collaborator", searchInMyHub);
         setTooltip("Check to save your login and password in workspace", rememberCombo);
         setTooltip("Searches on owner, name, swagger.info.title and swagger.info.description of all APIs", searchField);
 
