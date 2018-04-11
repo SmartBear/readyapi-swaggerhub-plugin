@@ -16,8 +16,7 @@ public class ReadFromHubAction extends AbstractSoapUIAction<WsdlProject> {
     @Override
     public void perform(WsdlProject modelItem, Object o) {
         Platform.runLater(() -> {
-            ImportFromHubDialog importFromHubDialog = null;
-            importFromHubDialog = new ImportFromHubDialog(modelItem);
+            ImportFromHubDialog importFromHubDialog = new ImportFromHubDialog(modelItem);
             UISupport.centerFxDialog(importFromHubDialog);
             importFromHubDialog.showAndWait();
         });
