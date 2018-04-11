@@ -15,9 +15,14 @@ class ApisJsonImporter {
             it.properties.each { prop ->
                 if (prop.type == "Swagger") {
                     descriptor.swaggerUrl = prop.url
-                }
-                else if( prop.type == "X-Versions" ){
+                } else if (prop.type == "X-Versions") {
                     descriptor.versions = prop.value.split(',')
+                } else if (prop.type == "X-Private") {
+                    descriptor.isPrivate = Boolean.parseBoolean(prop.value);
+                } else if (prop.type == "X-OASVersion") {
+                    descriptor.oasVersion = prop.value
+                } else if (prop.type == "X-Published") {
+                    descriptor.isPublished = Boolean.parseBoolean(prop.value)
                 }
             }
 
@@ -32,11 +37,15 @@ class ApiDescriptor {
     public String name
     public String description
     public String swaggerUrl
-    public String [] versions
+    public String oasVersion
+    public String[] versions
+    public boolean isPrivate;
+    public boolean isPublished;
+
 
     @Override
     String toString() {
-        return name + " - " + description + ((description.length()>0)?" ":"") +
-                "[" + versions.length + " version" + ((versions.length==1)?"]":"s]")
+        return name + " - " + description + ((description.length() > 0) ? " " : "") +
+                "[" + versions.length + " version" + ((versions.length == 1) ? "]" : "s]")
     }
 }
