@@ -15,7 +15,6 @@ import com.smartbear.swagger.Swagger2Importer;
 import com.smartbear.swagger.SwaggerImporter;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -30,10 +29,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -64,12 +65,13 @@ public class ImportFromHubDialog extends Dialog {
     private final PasswordField passwordField = new PasswordField();
     private final TextField searchField = new TextField();
     private final CheckBox searchInMyHub = new CheckBox();
-    private String apiKey;
     private final CheckBox rememberCombo = new CheckBox();
     private final SwaggerHubAPITable table = new SwaggerHubAPITable();
     private final Button searchButton = new Button("Search");
     private final StackPane stackPane = new StackPane();
     private final WsdlProject project;
+    private GridPane loginForm;
+    private String apiKey;
 
 
     public ImportFromHubDialog(WsdlProject project) {
@@ -112,7 +114,7 @@ public class ImportFromHubDialog extends Dialog {
 
         tableScroll.setMaxHeight(CONTENT_PANE_HEIGHT);
         stackPane.getChildren().add(tableScroll);
-        vBox.getChildren().addAll(buildForm(), stackPane);
+        vBox.getChildren().addAll(buildLoginForm(), new Separator(), buildSearchForm(), stackPane);
         root.setCenter(vBox);
         getDialogPane().setContent(root);
     }
@@ -240,33 +242,24 @@ public class ImportFromHubDialog extends Dialog {
         }
     }
 
-    private GridPane buildForm() {
-        GridPane gridPane = new GridPane();
-        gridPane.setVgap(8);
-        gridPane.setHgap(8);
-        gridPane.setPadding(new Insets(8, 0, 8, 0));
+    private GridPane buildLoginForm() {
+        loginForm = new GridPane();
+        loginForm.setVgap(8);
+        loginForm.setHgap(8);
+        loginForm.setPadding(new Insets(8, 0, 8, 0));
 
         Label loginLabel = createLabel("Login");
-        gridPane.add(loginLabel, 0, 0);
-        gridPane.add(loginField, 1, 0);
+        loginForm.add(loginLabel, 0, 0);
+        loginForm.add(loginField, 1, 0);
 
         Label passwordLabel = createLabel("Password");
-        gridPane.add(passwordLabel, 0, 1);
-        gridPane.add(passwordField, 1, 1);
+        loginForm.add(passwordLabel, 0, 1);
+        loginForm.add(passwordField, 1, 1);
 
         Label rememberLabel = createLabel("Remember me");
 
-        gridPane.add(rememberLabel, 0, 2);
-        gridPane.add(rememberCombo, 1, 2);
-
-        Label searchInMyHubLabel = createLabel("My APIs only");
-        gridPane.add(searchInMyHubLabel, 0, 3);
-        gridPane.add(searchInMyHub, 1, 3);
-
-        Label searchLabel = new Label("Search");
-        gridPane.add(searchLabel, 0, 4);
-        gridPane.add(searchField, 1, 4);
-        gridPane.add(searchButton, 2, 4);
+        loginForm.add(rememberLabel, 0, 2);
+        loginForm.add(rememberCombo, 1, 2);
 
         rememberCombo.setSelected(true);
         searchInMyHub.setOnAction(event -> {
@@ -277,9 +270,7 @@ public class ImportFromHubDialog extends Dialog {
 
         setTooltip("Specify your SwaggerHub login", loginField);
         setTooltip("Specify your SwaggerHub password", passwordField);
-        setTooltip("Show only those APIs that the authenticated user has access to either as owner or collaborator", searchInMyHub);
         setTooltip("Check to save your login and password in workspace", rememberCombo);
-        setTooltip("Searches on owner, name, swagger.info.title and swagger.info.description of all APIs", searchField);
 
         Workspace workspace = ApplicationEnvironment.getWorkspace();
         passwordField.setText(workspace.getSettings().getString(SWAGGER_HUB_PASSWORD, ""));
@@ -287,6 +278,29 @@ public class ImportFromHubDialog extends Dialog {
 
         passwordField.setPrefColumnCount(25);
         loginField.setPrefColumnCount(25);
+
+        return loginForm;
+    }
+
+    private GridPane buildSearchForm() {
+        GridPane gridPane = new GridPane();
+        gridPane.setVgap(8);
+        gridPane.setHgap(8);
+        gridPane.setPadding(new Insets(8, 0, 8, 0));
+
+        Label searchLabel = new Label("Search");
+        gridPane.add(searchLabel, 0, 0);
+        gridPane.add(searchField, 1, 0);
+        gridPane.add(searchButton, 2, 0);
+
+        Label searchInMyHubLabel = createLabel("My APIs only  ");
+        gridPane.add(searchInMyHubLabel, 0, 1);
+        gridPane.add(searchInMyHub, 1, 1);
+
+        searchField.setPrefColumnCount(25);
+
+        setTooltip("Searches on owner, name, swagger.info.title and swagger.info.description of all APIs", searchField);
+        setTooltip("Show only those APIs that the authenticated user has access to either as owner or collaborator", searchInMyHub);
 
         return gridPane;
     }
