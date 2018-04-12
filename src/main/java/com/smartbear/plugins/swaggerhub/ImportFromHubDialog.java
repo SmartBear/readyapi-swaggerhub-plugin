@@ -15,6 +15,7 @@ import com.smartbear.swagger.Swagger2Importer;
 import com.smartbear.swagger.SwaggerImporter;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -268,6 +269,11 @@ public class ImportFromHubDialog extends Dialog {
         gridPane.add(searchButton, 2, 4);
 
         rememberCombo.setSelected(true);
+        searchInMyHub.setOnAction(event -> {
+            if (searchInMyHub.isSelected()) {
+                populateList();
+            }
+        });
 
         setTooltip("Specify your SwaggerHub login", loginField);
         setTooltip("Specify your SwaggerHub password", passwordField);
