@@ -1,8 +1,6 @@
 package com.smartbear.plugins.swaggerhub;
 
-import com.eviware.soapui.impl.rest.AbstractRestService;
 import com.eviware.soapui.impl.rest.RestService;
-import com.eviware.soapui.impl.wsdl.WsdlProject;
 import com.eviware.soapui.impl.wsdl.support.http.HttpClientSupport;
 import com.eviware.soapui.model.settings.Settings;
 import com.eviware.soapui.plugins.ActionConfiguration;
@@ -17,6 +15,7 @@ import com.eviware.x.form.support.ADialogBuilder;
 import com.eviware.x.form.support.AField;
 import com.eviware.x.form.support.AForm;
 import com.google.common.io.Files;
+import com.smartbear.swagger.Swagger2Exporter;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -27,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 
 @ActionConfiguration(actionGroup = "RestServiceActions", separatorBefore = true)
 public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
@@ -90,18 +88,8 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
                 }
             }
 
-            Class exporterClass = Class.forName("com.smartbear.swagger.Swagger2Exporter");
-            Object exporter = exporterClass.getConstructor(WsdlProject.class).newInstance(restService.getProject());
-
-            Method method;
-            try {
-                method = exporterClass.getMethod("exportToFolder", String.class, String.class, String.class, RestService[].class, String.class);
-            } catch (NoSuchMethodException e) {
-                method = exporterClass.getMethod("exportToFolder", String.class, String.class, String.class, AbstractRestService[].class, String.class);
-            }
-
-            String result = (String) method.invoke(exporter, Files.createTempDir().getAbsolutePath(),
-                    versionId, "json", new RestService[]{restService}, restService.getBasePath());
+            Swagger2Exporter exporter = new Swagger2Exporter(restService.getProject());
+            String result = exporter.exportToFileSystem(Files.createTempDir().getAbsolutePath(), versionId, "json", new RestService[]{restService}, restService.getBasePath());
 
             LOG.info("Created temporary Swagger definition at " + result);
             HttpPost post = new HttpPost(uri);
