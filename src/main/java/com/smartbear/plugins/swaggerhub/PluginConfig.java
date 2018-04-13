@@ -2,11 +2,9 @@ package com.smartbear.plugins.swaggerhub;
 
 import com.eviware.soapui.plugins.PluginAdapter;
 import com.eviware.soapui.plugins.PluginConfiguration;
-import com.eviware.soapui.plugins.PluginDependencies;
-import com.eviware.soapui.plugins.PluginDependency;
 
 @PluginConfiguration(groupId = "com.smartbear.plugins", name = "SwaggerHub ReadyAPI Plugin", version = "1.3.0",
-        autoDetect = true, description = "Integrates Ready API with SwaggerHub",
+        autoDetect = true, description = "Integrates Ready API with SwaggerHub", minimumReadyApiVersion = "2.4.0",
         infoUrl = "")
 public class PluginConfig extends PluginAdapter {
 

@@ -34,7 +34,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -61,6 +60,7 @@ public class ImportFromHubDialog extends Dialog {
     private static final String PRODUCT_ICON_PATH = UISupport.getImageResourceUrl("/ready-api-icon-16.png").toString();
     private static final int CONTENT_PANE_WIDTH = 710;
     private static final int CONTENT_PANE_HEIGHT = 525;
+    private static final String SEARCH_LIMIT = "50";
     private final TextField loginField = new TextField();
     private final PasswordField passwordField = new PasswordField();
     private final TextField searchField = new TextField();
@@ -87,7 +87,7 @@ public class ImportFromHubDialog extends Dialog {
         Stage stage = (Stage) scene.getWindow();
         stage.getIcons().add(new Image(PRODUCT_ICON_PATH));
         setResizable(false);
-        setTitle("Import From SwaggerHub");
+        setTitle("Import from SwaggerHub");
         String css = this.getClass().getResource("/css/swaggerhub-plugin.css").toExternalForm();
         scene.getStylesheets().add(css);
         createButtons();
@@ -163,13 +163,14 @@ public class ImportFromHubDialog extends Dialog {
             if (StringUtils.isNotEmpty(login) && StringUtils.isNotEmpty(password) && searchInMyHub.isSelected()) {
                 uri = PluginConfig.SWAGGERHUB_API + "?filter=user";
                 try {
-                    getApiKey(password, login);
+                    getApiKey(login, password);
                 } catch (Exception e) {
+                    Logging.logError(e, "Cannot retrieve an API Key. Please check your credentials");
                     return;
                 }
                 importPrivate = true;
             } else {
-                uri = PluginConfig.SWAGGERHUB_API + "?limit=50";
+                uri = PluginConfig.SWAGGERHUB_API + "?limit=" + SEARCH_LIMIT;
             }
 
             if (StringUtils.isNotEmpty(searchQuery)) {
@@ -222,9 +223,8 @@ public class ImportFromHubDialog extends Dialog {
             }
 
             String url = swaggerUrl.substring(0, swaggerUrl.lastIndexOf('/')) + "/" + version;
-            System.out.println("Attempting to import Swagger from [" + url + "]");
             if (descriptor.isPrivate) {
-                CollectionUtils.addAll(result, importer.importSwagger(swaggerUrl, apiKey));
+                Collections.addAll(result, importer.importSwagger(swaggerUrl, apiKey));
             } else {
                 Collections.addAll(result, importer.importSwagger(swaggerUrl));
             }
@@ -316,30 +316,24 @@ public class ImportFromHubDialog extends Dialog {
         component.setTooltip(tooltip);
     }
 
-    private void getApiKey(String password, String login) throws Exception {
+    private void getApiKey(String login, String password) throws Exception {
         String jsonString = "";
-        try {
-            jsonString = new JSONObject()
-                    .put("password", password)
-                    .put("username", login).toString();
-            HttpPost httpPost = new HttpPost(GET_TOKEN_URL);
-            StringEntity params = new StringEntity(jsonString);
-            httpPost.setHeader("content-type", "application/json");
-            httpPost.setEntity(params);
-            HttpResponse response = HttpClientSupport.getHttpClient().execute(httpPost);
-            String jsonResponse = new String(ByteStreams.toByteArray(response.getEntity().getContent()));
-            JSONObject jsonObject = new JSONObject(jsonResponse);
-            String extractedApiKey = jsonObject.getString("token");
+        jsonString = new JSONObject()
+                .put("password", password)
+                .put("username", login).toString();
+        HttpPost httpPost = new HttpPost(GET_TOKEN_URL);
+        StringEntity params = new StringEntity(jsonString);
+        httpPost.setHeader("content-type", "application/json");
+        httpPost.setEntity(params);
+        HttpResponse response = HttpClientSupport.getHttpClient().execute(httpPost);
+        String jsonResponse = new String(ByteStreams.toByteArray(response.getEntity().getContent()));
+        JSONObject jsonObject = new JSONObject(jsonResponse);
+        String extractedApiKey = jsonObject.getString("token");
 
-            if (StringUtils.isNotEmpty(extractedApiKey)) {
-                apiKey = extractedApiKey;
-            } else {
-                throw new Exception();
-            }
-
-        } catch (Exception e) {
-            Logging.logError(e, "Cannot retrieve API Key. Please check your credentials");
-            throw e;
+        if (StringUtils.isNotEmpty(extractedApiKey)) {
+            apiKey = extractedApiKey;
+        } else {
+            throw new Exception("Cannot retrieve an API Key");
         }
     }
 
