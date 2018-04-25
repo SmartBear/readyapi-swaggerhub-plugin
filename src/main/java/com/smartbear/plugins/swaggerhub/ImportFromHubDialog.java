@@ -55,6 +55,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.smartbear.swagger.AbstractSwaggerImporter.AUTHORIZATION_HEADER;
+import static javafx.scene.control.Alert.AlertType.ERROR;
 import static javafx.scene.control.Alert.AlertType.WARNING;
 
 public class ImportFromHubDialog extends Dialog {
@@ -176,7 +177,7 @@ public class ImportFromHubDialog extends Dialog {
                     Logging.logError(e, GETTING_API_KEY_ERROR);
                     Platform.runLater(() -> {
                         stackPane.getChildren().remove(progressIndicator);
-                        buildAlert(GETTING_API_KEY_ERROR, "Error", AlertType.ERROR).showAndWait();
+                        buildAlert(GETTING_API_KEY_ERROR, "Error", ERROR).showAndWait();
                     });
                     return;
                 }
@@ -210,7 +211,7 @@ public class ImportFromHubDialog extends Dialog {
                 });
             } catch (Exception e) {
                 Logging.logError(e, GETTING_LIST_OF_DEFINITIONS_ERROR);
-                Platform.runLater(() -> buildAlert(GETTING_LIST_OF_DEFINITIONS_ERROR, "Error", AlertType.ERROR).showAndWait());
+                Platform.runLater(() -> buildAlert(GETTING_LIST_OF_DEFINITIONS_ERROR, "Error", ERROR).showAndWait());
             } finally {
                 Platform.runLater(() -> stackPane.getChildren().remove(progressIndicator));
             }
@@ -226,7 +227,7 @@ public class ImportFromHubDialog extends Dialog {
 
             SwaggerImporter importer;
 
-            if (descriptor.oasVersion != null && descriptor.oasVersion.equals("3.0.0")) {
+            if (StringUtils.equals(descriptor.oasVersion, "3.0.0")) {
                 importer = new OpenAPI3Importer(project, "application/json", false);
             } else {
                 importer = new Swagger2Importer(project, "application/json", false);
