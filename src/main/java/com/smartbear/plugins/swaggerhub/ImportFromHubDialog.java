@@ -18,6 +18,7 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
@@ -47,17 +48,23 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static com.smartbear.swagger.AbstractSwaggerImporter.AUTHORIZATION_HEADER;
+import static javafx.scene.control.Alert.AlertType.ERROR;
+import static javafx.scene.control.Alert.AlertType.WARNING;
 
 public class ImportFromHubDialog extends Dialog {
     public static final String SWAGGER_HUB_LOGIN = "SwaggerHubLogin";
     public static final String SWAGGER_HUB_PASSWORD = "SwaggerHubPassword";
     public static final String GET_TOKEN_URL = "https://api.swaggerhub.com/token";
     private static final String PRODUCT_ICON_PATH = UISupport.getImageResourceUrl("/ready-api-icon-16.png").toString();
+    private static final String GETTING_API_KEY_ERROR = "Cannot retrieve an API Key. Please check your credentials";
+    private static final String GETTING_LIST_OF_DEFINITIONS_ERROR = "Cannot get list of definitions from SwaggerHub";
     private static final int CONTENT_PANE_WIDTH = 710;
     private static final int CONTENT_PANE_HEIGHT = 525;
     private static final String SEARCH_LIMIT = "50";
@@ -131,7 +138,7 @@ public class ImportFromHubDialog extends Dialog {
         okButton.addEventFilter(ActionEvent.ACTION, event -> {
             SwaggerHubAPITableModel model = (SwaggerHubAPITableModel) table.getSelectionModel().getSelectedItem();
             if (model == null) {
-                buildAlert().showAndWait();
+                buildAlert("Please select API for import", "Select API", WARNING).showAndWait();
                 event.consume();
             }
         });
@@ -143,6 +150,8 @@ public class ImportFromHubDialog extends Dialog {
     private void populateList() {
         ThreadPools.getThreadPool().execute(() -> {
             ProgressIndicator progressIndicator = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
+            progressIndicator.setMaxHeight(table.getHeight() * 0.7);
+            progressIndicator.setMaxWidth(table.getWidth() * 0.7);
             Platform.runLater(() -> {
                 stackPane.getChildren().add(progressIndicator);
                 table.clearTable();
@@ -165,7 +174,11 @@ public class ImportFromHubDialog extends Dialog {
                 try {
                     getApiKey(login, password);
                 } catch (Exception e) {
-                    Logging.logError(e, "Cannot retrieve an API Key. Please check your credentials");
+                    Logging.logError(e, GETTING_API_KEY_ERROR);
+                    Platform.runLater(() -> {
+                        stackPane.getChildren().remove(progressIndicator);
+                        buildAlert(GETTING_API_KEY_ERROR, "Error", ERROR).showAndWait();
+                    });
                     return;
                 }
                 importPrivate = true;
@@ -174,7 +187,11 @@ public class ImportFromHubDialog extends Dialog {
             }
 
             if (StringUtils.isNotEmpty(searchQuery)) {
-                uri += "&query=" + searchQuery;
+                try {
+                    uri += "&query=" + URLEncoder.encode(searchQuery.trim(), "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    Logging.logError(e);
+                }
             }
 
             try {
@@ -193,7 +210,8 @@ public class ImportFromHubDialog extends Dialog {
                     }
                 });
             } catch (Exception e) {
-                Logging.logError(e);
+                Logging.logError(e, GETTING_LIST_OF_DEFINITIONS_ERROR);
+                Platform.runLater(() -> buildAlert(GETTING_LIST_OF_DEFINITIONS_ERROR, "Error", ERROR).showAndWait());
             } finally {
                 Platform.runLater(() -> stackPane.getChildren().remove(progressIndicator));
             }
@@ -209,7 +227,7 @@ public class ImportFromHubDialog extends Dialog {
 
             SwaggerImporter importer;
 
-            if (descriptor.oasVersion.equals("3.0.0")) {
+            if (StringUtils.equals(descriptor.oasVersion, "3.0.0")) {
                 importer = new OpenAPI3Importer(project, "application/json", false);
             } else {
                 importer = new Swagger2Importer(project, "application/json", false);
@@ -337,10 +355,10 @@ public class ImportFromHubDialog extends Dialog {
         }
     }
 
-    private Alert buildAlert() {
-        Alert alert = new Alert(Alert.AlertType.WARNING, "Please select API for import", ButtonType.OK);
-        alert.setHeaderText("Select API");
-        alert.setTitle("Select API");
+    private Alert buildAlert(String text, String title, AlertType alertType) {
+        Alert alert = new Alert(alertType, text, ButtonType.OK);
+        alert.setHeaderText(title);
+        alert.setTitle(title);
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.setStyle("-fx-background-color: white");
         dialogPane.getStyleClass().add("default-text");
