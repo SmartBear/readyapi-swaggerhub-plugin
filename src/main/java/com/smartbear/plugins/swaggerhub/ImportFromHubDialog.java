@@ -223,7 +223,7 @@ public class ImportFromHubDialog extends Dialog {
         try {
             SwaggerHubAPITableModel model = (SwaggerHubAPITableModel) table.getSelectionModel().getSelectedItem();
             ApiDescriptor descriptor = model.getDescriptor();
-            String swaggerUrl = descriptor.swaggerUrl;
+            String defaultVersionUrl = descriptor.swaggerUrl;
 
             SwaggerImporter importer;
 
@@ -240,11 +240,11 @@ public class ImportFromHubDialog extends Dialog {
                 version = version.substring(1).trim();
             }
 
-            String url = swaggerUrl.substring(0, swaggerUrl.lastIndexOf('/')) + "/" + version;
+            String selectedVersionUrl = defaultVersionUrl.substring(0, defaultVersionUrl.lastIndexOf('/')) + "/" + version;
             if (descriptor.isPrivate) {
-                Collections.addAll(result, importer.importSwagger(swaggerUrl, apiKey));
+                Collections.addAll(result, importer.importSwagger(selectedVersionUrl, apiKey));
             } else {
-                Collections.addAll(result, importer.importSwagger(swaggerUrl));
+                Collections.addAll(result, importer.importSwagger(selectedVersionUrl));
             }
         } catch (Exception e) {
             Logging.logError(e);
