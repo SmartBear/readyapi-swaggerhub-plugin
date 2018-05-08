@@ -148,6 +148,7 @@ public class ImportFromHubDialog extends Dialog {
     }
 
     private void populateList() {
+        searchButton.setDisable(true);
         ThreadPools.getThreadPool().execute(() -> {
             ProgressIndicator progressIndicator = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
             progressIndicator.setMaxHeight(table.getHeight() * 0.7);
@@ -169,15 +170,20 @@ public class ImportFromHubDialog extends Dialog {
                 workspace.getSettings().setString(SWAGGER_HUB_PASSWORD, passwordField.getText());
             }
 
-            if (StringUtils.isNotEmpty(login) && StringUtils.isNotEmpty(password) && searchInMyHub.isSelected()) {
-                uri = PluginConfig.SWAGGERHUB_API + "?filter=user";
+            if (StringUtils.isNotEmpty(login) && StringUtils.isNotEmpty(password)) {
                 try {
                     getApiKey(login, password);
+                    if (searchInMyHub.isSelected()) {
+                        uri = PluginConfig.SWAGGERHUB_API + "?filter=user";
+                    } else {
+                        uri = PluginConfig.SWAGGERHUB_API + "?limit=" + SEARCH_LIMIT;
+                    }
                 } catch (Exception e) {
                     Logging.logError(e, GETTING_API_KEY_ERROR);
                     Platform.runLater(() -> {
                         stackPane.getChildren().remove(progressIndicator);
                         buildAlert(GETTING_API_KEY_ERROR, "Error", ERROR).showAndWait();
+                        searchButton.setDisable(false);
                     });
                     return;
                 }
@@ -213,7 +219,10 @@ public class ImportFromHubDialog extends Dialog {
                 Logging.logError(e, GETTING_LIST_OF_DEFINITIONS_ERROR);
                 Platform.runLater(() -> buildAlert(GETTING_LIST_OF_DEFINITIONS_ERROR, "Error", ERROR).showAndWait());
             } finally {
-                Platform.runLater(() -> stackPane.getChildren().remove(progressIndicator));
+                Platform.runLater(() -> {
+                    stackPane.getChildren().remove(progressIndicator);
+                    searchButton.setDisable(false);
+                });
             }
         });
     }
