@@ -262,11 +262,13 @@ public class ImportFromHubDialog extends Dialog {
     }
 
     private void handleOk() {
-        List<AbstractRestService> result = importApis();
-        if (CollectionUtils.isNotEmpty(result)) {
-            UISupport.selectAndShow(result.get(0), ModuleType.PROJECTS.getId());
-            close();
-        }
+        ThreadPools.getThreadPool().execute(() -> {
+            List<AbstractRestService> result = importApis();
+            if (CollectionUtils.isNotEmpty(result)) {
+                UISupport.selectAndShow(result.get(0), ModuleType.PROJECTS.getId());
+                close();
+            }
+        });
     }
 
     private GridPane buildLoginForm() {
