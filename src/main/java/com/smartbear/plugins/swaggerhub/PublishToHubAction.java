@@ -3,8 +3,8 @@ package com.smartbear.plugins.swaggerhub;
 import com.eviware.soapui.impl.rest.RestService;
 import com.eviware.soapui.impl.wsdl.support.http.HttpClientSupport;
 import com.eviware.soapui.model.settings.Settings;
+import com.eviware.soapui.model.workspace.Workspace;
 import com.eviware.soapui.plugins.ActionConfiguration;
-import com.eviware.soapui.support.Tools;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.action.support.AbstractSoapUIAction;
 import com.eviware.x.dialogs.Worker;
@@ -15,7 +15,11 @@ import com.eviware.x.form.support.ADialogBuilder;
 import com.eviware.x.form.support.AField;
 import com.eviware.x.form.support.AForm;
 import com.google.common.io.Files;
+import com.smartbear.ready.core.ApplicationEnvironment;
+import com.smartbear.ready.core.Logging;
+import com.smartbear.swagger.OpenAPI3Exporter;
 import com.smartbear.swagger.Swagger2Exporter;
+import com.smartbear.swagger.SwaggerExporter;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -27,11 +31,16 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 
+import static com.smartbear.plugins.swaggerhub.ImportFromHubDialog.GETTING_API_KEY_ERROR;
+import static com.smartbear.plugins.swaggerhub.ImportFromHubDialog.SWAGGER_HUB_LOGIN;
+import static com.smartbear.plugins.swaggerhub.ImportFromHubDialog.SWAGGER_HUB_PASSWORD;
+import static com.smartbear.plugins.swaggerhub.Utils.getApiKey;
+
 @ActionConfiguration(actionGroup = "RestServiceActions", separatorBefore = true)
 public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
-
     private static final Logger LOG = LoggerFactory.getLogger(PublishToHubAction.class);
-    public static final String SWAGGER_HUB_API_KEY = "SwaggerHubApiKey";
+    private static final String SWAGGER_2_0 = "Swagger 2.0";
+    private static final String OPEN_API_3_0 = "OpenAPI 3.0";
     private XFormDialog dialog;
 
     public PublishToHubAction() {
@@ -43,7 +52,9 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         Settings settings = restService.getProject().getSettings();
         if (dialog == null) {
             dialog = ADialogBuilder.buildDialog(Form.class);
-            dialog.setValue(Form.APIKEY, settings.getString(SWAGGER_HUB_API_KEY, ""));
+            dialog.setValue(Form.LOGIN, settings.getString(SWAGGER_HUB_LOGIN, ""));
+            dialog.setValue(Form.PASSWORD, settings.getString(SWAGGER_HUB_PASSWORD, ""));
+            dialog.setBooleanValue(Form.REMEMBER, true);
         }
 
         final boolean[] finished = {false};
@@ -69,11 +80,11 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
 
     private boolean publishApi(RestService restService) throws IOException {
         try {
-            String apikey = dialog.getValue(Form.APIKEY);
+            String login = dialog.getValue(Form.LOGIN);
+            String password = dialog.getValue(Form.PASSWORD);
             String groupId = dialog.getValue(Form.GROUP_ID);
             String apiId = dialog.getValue(Form.API_ID);
             String versionId = dialog.getValue(Form.VERSION);
-            boolean browse = dialog.getBooleanValue(Form.BROWSE);
             boolean remember = dialog.getBooleanValue(Form.REMEMBER);
 
             String uri = PluginConfig.SWAGGERHUB_API + "/" + groupId + "/" + apiId;
@@ -88,25 +99,42 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
                 }
             }
 
-            Swagger2Exporter exporter = new Swagger2Exporter(restService.getProject());
-            String result = exporter.exportToFileSystem(Files.createTempDir().getAbsolutePath(), versionId, "json", new RestService[]{restService}, restService.getBasePath());
+            SwaggerExporter exporter = null;
+            if (dialog.getValue(Form.OAS_VERSION).equals(SWAGGER_2_0)) {
+                exporter = new Swagger2Exporter(restService.getProject());
+            } else {
+                exporter = new OpenAPI3Exporter(restService.getProject());
+            }
+            String result = exporter.exportToFileSystem(Files.createTempDir().getAbsolutePath() + File.separator + "api-docs.json", versionId,
+                    "json", new RestService[]{restService}, restService.getBasePath());
 
             LOG.info("Created temporary Swagger definition at " + result);
-            HttpPost post = new HttpPost(uri);
-            post.setEntity(new FileEntity(new File(result, "api-docs.json"), "application/json"));
-            post.addHeader("Authorization", apikey);
+            String apiKey = "";
+            try {
+                apiKey = getApiKey(login, password);
+            } catch (Exception e) {
+                Logging.logError(e);
+                UISupport.showErrorMessage(GETTING_API_KEY_ERROR);
+                return false;
+            }
+
+            if (remember) {
+                Workspace workspace = ApplicationEnvironment.getWorkspace();
+                workspace.getSettings().setString(SWAGGER_HUB_LOGIN, login);
+                workspace.getSettings().setString(SWAGGER_HUB_PASSWORD, password);
+            }
+
+
+            HttpPost post = new HttpPost(uri + "?version=" + versionId + "&isPrivate=" + dialog.getBooleanValue(Form.PRIVATE));
+            post.setEntity(new FileEntity(new File(result), "application/json"));
+            post.addHeader("Authorization", apiKey);
 
             LOG.info("Posting definition to " + uri);
             response = client.execute(post);
 
-            restService.getProject().getWorkspace().getSettings().setString(SWAGGER_HUB_API_KEY, remember ? apikey : "");
-
-            if (response.getStatusLine().getStatusCode() == 201) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode == 201 || statusCode == 200) {
                 UISupport.showInfoMessage("API published successfully");
-                if (browse) {
-                    Tools.openURL(PluginConfig.SWAGGERHUB_URL + "/api/" + groupId + "/" + apiId + "/" + versionId);
-                }
-
                 Utils.sendAnalytics("ExportToSwaggerHubAction");
                 return true;
             } else {
@@ -114,14 +142,20 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
                 return false;
             }
         } catch (Exception e) {
-            LOG.error(e.getMessage());
+            Logging.logError(e);
         }
         return true;
     }
 
-    @AForm(name = "Publish Definition to SwaggerHub", description = "Publishes the selected REST definition to SwaggerHub (in the Swagger 2.0 format).")
+    @AForm(name = "Publish Definition to SwaggerHub", description = "Publishes the selected REST definition to SwaggerHub (in the OpenAPI 3.0 format).")
     public interface Form {
-        @AField(name = "Owner", description = "Your SwaggerHub account.", type = AField.AFieldType.STRING)
+        @AField(name = "Login", description = "Your SwaggerHub login.", type = AField.AFieldType.STRING)
+        public final static String LOGIN = "Login";
+
+        @AField(name = "Password", description = "Your SwaggerHub password.", type = AField.AFieldType.PASSWORD)
+        public final static String PASSWORD = "Password";
+
+        @AField(name = "Owner", description = "An API owner", type = AField.AFieldType.STRING)
         public final static String GROUP_ID = "Owner";
 
         @AField(name = "Unique API name", description = "The API identifier at SwaggerHub (letters, digits or spaces, 3 chars min).", type = AField.AFieldType.STRING)
@@ -130,13 +164,13 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         @AField(name = "Version", description = "The version of this API.", type = AField.AFieldType.STRING)
         public final static String VERSION = "Version";
 
-        @AField(name = "API key", description = "Your SwaggerHub API Key (from SwaggerHub's Settings page).", type = AField.AFieldType.PASSWORD)
-        public final static String APIKEY = "API key";
+        @AField(name = "OAS Version", description = "The OAS version of this API.", type = AField.AFieldType.RADIOGROUP, values = {SWAGGER_2_0, OPEN_API_3_0})
+        public final static String OAS_VERSION = "OAS Version";
 
-        @AField(name = "Remember the key", description = "Save the API key for future actions.", type = AField.AFieldType.BOOLEAN)
-        public final static String REMEMBER = "Remember the key";
+        @AField(name = "Remember credentials", description = "Save credentials for future actions.", type = AField.AFieldType.BOOLEAN)
+        public final static String REMEMBER = "Remember credentials";
 
-        @AField(name = "Open after publishing", description = "Opens this API on SwaggerHub after publishing", type = AField.AFieldType.BOOLEAN)
-        public final static String BROWSE = "Open after publishing";
+        @AField(name = "Private", description = "Make this API private.", type = AField.AFieldType.BOOLEAN)
+        public final static String PRIVATE = "Private";
     }
 }
