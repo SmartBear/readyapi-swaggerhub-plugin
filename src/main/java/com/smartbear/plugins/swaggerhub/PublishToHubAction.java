@@ -133,12 +133,22 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
             response = client.execute(post);
 
             int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode == 201 || statusCode == 200) {
+            if (statusCode == 201 || statusCode == 200 || statusCode == 205) {
                 UISupport.showInfoMessage("API published successfully");
                 Utils.sendAnalytics("ExportToSwaggerHubAction");
                 return true;
             } else {
-                UISupport.showErrorMessage("Failed to publish API; " + response.getStatusLine().toString());
+                String reason = "";
+                if (statusCode == 400) {
+                    reason = "The definition was invalid.";
+                } else if (statusCode == 403) {
+                    reason = "Maximum number of APIs reached.";
+                } else if (statusCode == 409) {
+                    reason = "Cannot overwrite a published API version.";
+                } else if (statusCode == 415) {
+                    reason = "Invalid content type";
+                }
+                UISupport.showErrorMessage("Failed to publish API; " + response.getStatusLine().toString() + "; " + reason);
                 return false;
             }
         } catch (Exception e) {
@@ -147,7 +157,7 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         return true;
     }
 
-    @AForm(name = "Publish Definition to SwaggerHub", description = "Publishes the selected REST definition to SwaggerHub (in the OpenAPI 3.0 format).")
+    @AForm(name = "Publish Definition to SwaggerHub", description = "Publishes the selected REST definition to SwaggerHub (in Swagger 2.0/OpenAPI 3.0 format).")
     public interface Form {
         @AField(name = "Login", description = "Your SwaggerHub login.", type = AField.AFieldType.STRING)
         public final static String LOGIN = "Login";
