@@ -44,9 +44,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -63,7 +60,6 @@ public class ImportFromHubDialog extends Dialog {
     public static final String SWAGGER_HUB_LOGIN = "SwaggerHubLogin";
     public static final String SWAGGER_HUB_PASSWORD = "SwaggerHubPassword";
     public static final String GETTING_API_KEY_ERROR = "Cannot retrieve an API Key. Please check your credentials";
-    public static final String GET_TOKEN_URL = "https://api.swaggerhub.com/token";
     private static final String PRODUCT_ICON_PATH = UISupport.getImageResourceUrl("/ready-api-icon-16.png").toString();
     private static final String GETTING_LIST_OF_DEFINITIONS_ERROR = "Cannot get list of definitions from SwaggerHub";
     private static final int CONTENT_PANE_WIDTH = 710;

@@ -49,7 +49,7 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
 
     public void perform(final RestService restService, Object o) {
 
-        Settings settings = restService.getProject().getSettings();
+        Settings settings = ApplicationEnvironment.getWorkspace().getSettings();
         if (dialog == null) {
             dialog = ADialogBuilder.buildDialog(Form.class);
             dialog.setValue(Form.LOGIN, settings.getString(SWAGGER_HUB_LOGIN, ""));
@@ -105,8 +105,12 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
             } else {
                 exporter = new OpenAPI3Exporter(restService.getProject());
             }
-            String result = exporter.exportToFileSystem(Files.createTempDir().getAbsolutePath() + File.separator + "api-docs.json", versionId,
+            String tempDirectoryPath = Files.createTempDir().getAbsolutePath();
+            String tempFilePath = tempDirectoryPath + File.separator + "api-docs.json";
+            String result = exporter.exportToFileSystem(tempFilePath, versionId,
                     "json", new RestService[]{restService}, restService.getBasePath());
+            new File(tempDirectoryPath).deleteOnExit();
+            new File(tempFilePath).deleteOnExit();
 
             LOG.info("Created temporary Swagger definition at " + result);
             String apiKey = "";
@@ -146,7 +150,7 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
                 } else if (statusCode == 409) {
                     reason = "Cannot overwrite a published API version.";
                 } else if (statusCode == 415) {
-                    reason = "Invalid content type";
+                    reason = "Invalid content type.";
                 }
                 UISupport.showErrorMessage("Failed to publish API; " + response.getStatusLine().toString() + "; " + reason);
                 return false;
@@ -165,7 +169,7 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         @AField(name = "Password", description = "Your SwaggerHub password.", type = AField.AFieldType.PASSWORD)
         public final static String PASSWORD = "Password";
 
-        @AField(name = "Owner", description = "An API owner", type = AField.AFieldType.STRING)
+        @AField(name = "Owner", description = "An API owner.", type = AField.AFieldType.STRING)
         public final static String GROUP_ID = "Owner";
 
         @AField(name = "Unique API name", description = "The API identifier at SwaggerHub (letters, digits or spaces, 3 chars min).", type = AField.AFieldType.STRING)
