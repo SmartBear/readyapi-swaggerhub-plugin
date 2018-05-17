@@ -17,6 +17,7 @@ import com.eviware.x.form.support.AForm;
 import com.google.common.io.Files;
 import com.smartbear.ready.core.ApplicationEnvironment;
 import com.smartbear.ready.core.Logging;
+import com.smartbear.ready.util.ReadyTools;
 import com.smartbear.swagger.OpenAPI3Exporter;
 import com.smartbear.swagger.Swagger2Exporter;
 import com.smartbear.swagger.SwaggerExporter;
@@ -109,8 +110,7 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
             String tempFilePath = tempDirectoryPath + File.separator + "api-docs.json";
             String result = exporter.exportToFileSystem(tempFilePath, versionId,
                     "json", new RestService[]{restService}, restService.getBasePath());
-            new File(tempDirectoryPath).deleteOnExit();
-            new File(tempFilePath).deleteOnExit();
+            ReadyTools.deleteOnExit(new File(tempDirectoryPath));
 
             LOG.info("Created temporary Swagger definition at " + result);
             String apiKey = "";
