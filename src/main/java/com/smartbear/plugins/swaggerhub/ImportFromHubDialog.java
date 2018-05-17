@@ -44,9 +44,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -54,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.smartbear.plugins.swaggerhub.Utils.getApiKey;
 import static com.smartbear.swagger.AbstractSwaggerImporter.AUTHORIZATION_HEADER;
 import static javafx.scene.control.Alert.AlertType.ERROR;
 import static javafx.scene.control.Alert.AlertType.WARNING;
@@ -61,9 +59,8 @@ import static javafx.scene.control.Alert.AlertType.WARNING;
 public class ImportFromHubDialog extends Dialog {
     public static final String SWAGGER_HUB_LOGIN = "SwaggerHubLogin";
     public static final String SWAGGER_HUB_PASSWORD = "SwaggerHubPassword";
-    public static final String GET_TOKEN_URL = "https://api.swaggerhub.com/token";
+    public static final String GETTING_API_KEY_ERROR = "Cannot retrieve an API Key. Please check your credentials";
     private static final String PRODUCT_ICON_PATH = UISupport.getImageResourceUrl("/ready-api-icon-16.png").toString();
-    private static final String GETTING_API_KEY_ERROR = "Cannot retrieve an API Key. Please check your credentials";
     private static final String GETTING_LIST_OF_DEFINITIONS_ERROR = "Cannot get list of definitions from SwaggerHub";
     private static final int CONTENT_PANE_WIDTH = 710;
     private static final int CONTENT_PANE_HEIGHT = 525;
@@ -172,7 +169,7 @@ public class ImportFromHubDialog extends Dialog {
 
             if (StringUtils.isNotEmpty(login) && StringUtils.isNotEmpty(password)) {
                 try {
-                    getApiKey(login, password);
+                    apiKey = getApiKey(login, password);
                     if (searchInMyHub.isSelected()) {
                         uri = PluginConfig.SWAGGERHUB_API + "?filter=user";
                     } else {
@@ -343,27 +340,6 @@ public class ImportFromHubDialog extends Dialog {
     private void setTooltip(String text, Control component) {
         Tooltip tooltip = new Tooltip(text);
         component.setTooltip(tooltip);
-    }
-
-    private void getApiKey(String login, String password) throws Exception {
-        String jsonString = "";
-        jsonString = new JSONObject()
-                .put("password", password)
-                .put("username", login).toString();
-        HttpPost httpPost = new HttpPost(GET_TOKEN_URL);
-        StringEntity params = new StringEntity(jsonString);
-        httpPost.setHeader("content-type", "application/json");
-        httpPost.setEntity(params);
-        HttpResponse response = HttpClientSupport.getHttpClient().execute(httpPost);
-        String jsonResponse = new String(ByteStreams.toByteArray(response.getEntity().getContent()));
-        JSONObject jsonObject = new JSONObject(jsonResponse);
-        String extractedApiKey = jsonObject.getString("token");
-
-        if (StringUtils.isNotEmpty(extractedApiKey)) {
-            apiKey = extractedApiKey;
-        } else {
-            throw new Exception("Cannot retrieve an API Key");
-        }
     }
 
     private Alert buildAlert(String text, String title, AlertType alertType) {
