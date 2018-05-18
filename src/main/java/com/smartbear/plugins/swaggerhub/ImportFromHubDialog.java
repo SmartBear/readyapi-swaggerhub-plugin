@@ -326,8 +326,7 @@ public class ImportFromHubDialog extends Dialog {
 
         searchField.setPrefColumnCount(25);
         searchField.setOnKeyPressed(event -> {
-            if (event.getCode().equals(KeyCode.ENTER))
-            {
+            if (event.getCode().equals(KeyCode.ENTER)) {
                 populateList();
                 event.consume();
             }
