@@ -34,6 +34,7 @@ import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
@@ -324,6 +325,12 @@ public class ImportFromHubDialog extends Dialog {
         gridPane.add(searchInMyHub, 1, 1);
 
         searchField.setPrefColumnCount(25);
+        searchField.setOnKeyPressed(event -> {
+            if (event.getCode().equals(KeyCode.ENTER)) {
+                populateList();
+                event.consume();
+            }
+        });
 
         setTooltip("Searches on owner, name, swagger.info.title and swagger.info.description of all APIs", searchField);
         setTooltip("Show only those APIs that the authenticated user has access to either as owner or collaborator", searchInMyHub);
