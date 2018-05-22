@@ -51,12 +51,10 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
     public void perform(final RestService restService, Object o) {
 
         Settings settings = ApplicationEnvironment.getWorkspace().getSettings();
-        if (dialog == null) {
-            dialog = ADialogBuilder.buildDialog(Form.class);
-            dialog.setValue(Form.LOGIN, settings.getString(SWAGGER_HUB_LOGIN, ""));
-            dialog.setValue(Form.PASSWORD, settings.getString(SWAGGER_HUB_PASSWORD, ""));
-            dialog.setBooleanValue(Form.REMEMBER, true);
-        }
+        dialog = ADialogBuilder.buildDialog(Form.class);
+        dialog.setValue(Form.LOGIN, settings.getString(SWAGGER_HUB_LOGIN, ""));
+        dialog.setValue(Form.PASSWORD, settings.getString(SWAGGER_HUB_PASSWORD, ""));
+        dialog.setBooleanValue(Form.REMEMBER, true);
 
         final boolean[] finished = {false};
         while (!finished[0] && dialog.show()) {
