@@ -161,30 +161,30 @@ public class PublishToHubAction extends AbstractSoapUIAction<RestService> {
         return true;
     }
 
-    @AForm(name = "Publish Definition to SwaggerHub", description = "Publishes the selected REST definition to SwaggerHub (in Swagger 2.0/OpenAPI 3.0 format).")
+    @AForm(name = "Publish Definition to SwaggerHub", description = "Publishes the selected REST definition to SwaggerHub (in Swagger 2.0/OpenAPI 3.0 format)")
     public interface Form {
-        @AField(name = "Login", description = "Your SwaggerHub login.", type = AField.AFieldType.STRING)
+        @AField(name = "Login", description = "Your SwaggerHub login", type = AField.AFieldType.STRING)
         public final static String LOGIN = "Login";
 
-        @AField(name = "Password", description = "Your SwaggerHub password.", type = AField.AFieldType.PASSWORD)
+        @AField(name = "Password", description = "Your SwaggerHub password", type = AField.AFieldType.PASSWORD)
         public final static String PASSWORD = "Password";
 
-        @AField(name = "Owner", description = "An API owner.", type = AField.AFieldType.STRING)
+        @AField(name = "Owner", description = "An API owner", type = AField.AFieldType.STRING)
         public final static String GROUP_ID = "Owner";
 
-        @AField(name = "Unique API name", description = "The API identifier at SwaggerHub (letters, digits or spaces, 3 chars min).", type = AField.AFieldType.STRING)
+        @AField(name = "Unique API name", description = "The API identifier at SwaggerHub (letters, digits or spaces, 3 chars min)", type = AField.AFieldType.STRING)
         public final static String API_ID = "Unique API name";
 
-        @AField(name = "Version", description = "The version of this API.", type = AField.AFieldType.STRING)
+        @AField(name = "Version", description = "The version of this API", type = AField.AFieldType.STRING)
         public final static String VERSION = "Version";
 
-        @AField(name = "OAS Version", description = "The OAS version of this API.", type = AField.AFieldType.RADIOGROUP, values = {SWAGGER_2_0, OPEN_API_3_0})
+        @AField(name = "OAS Version", description = "The OAS version of this API", type = AField.AFieldType.RADIOGROUP, values = {SWAGGER_2_0, OPEN_API_3_0})
         public final static String OAS_VERSION = "OAS Version";
 
-        @AField(name = "Remember credentials", description = "Save credentials for future actions.", type = AField.AFieldType.BOOLEAN)
+        @AField(name = "Remember credentials", description = "Save credentials for future actions", type = AField.AFieldType.BOOLEAN)
         public final static String REMEMBER = "Remember credentials";
 
-        @AField(name = "Private", description = "Make this API private.", type = AField.AFieldType.BOOLEAN)
+        @AField(name = "Private", description = "Make this API private", type = AField.AFieldType.BOOLEAN)
         public final static String PRIVATE = "Private";
     }
 }
