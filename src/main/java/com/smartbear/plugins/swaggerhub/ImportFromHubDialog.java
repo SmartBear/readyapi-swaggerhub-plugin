@@ -243,7 +243,9 @@ public class ImportFromHubDialog extends Dialog {
             int selectedVersion = model.getVersionCombo().getSelectionModel().getSelectedIndex();
 
             String version = descriptor.versions[selectedVersion];
-            if (version.startsWith("*") || version.startsWith("-")) {
+            if (version.startsWith("*-")) {
+                version = version.substring(2).trim();
+            } else if (version.startsWith("*") || version.startsWith("-")) {
                 version = version.substring(1).trim();
             }
 
