@@ -1,6 +1,6 @@
 # SwaggerHub ReadyAPI Plugin
 
-SwaggerHub plugin for [ReadyAPI](https://smartbear.com/product/ready-api/overview/) let's you to integrate ReadyAPI and [SwaggerHub](https://swagger.io/tools/swaggerhub/). You will be able to --
+SwaggerHub plugin for [ReadyAPI](https://smartbear.com/product/ready-api/overview/) lets you to integrate ReadyAPI and [SwaggerHub](https://swagger.io/tools/swaggerhub/). You will be able to --
 
 * Import an OpenAPI (Swagger) definition from SwaggerHub to a ReadyAPI project.
 * Publish an API from ReadyAPI to SwaggerHub.
