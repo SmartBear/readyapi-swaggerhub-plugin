@@ -1,6 +1,6 @@
 # SwaggerHub ReadyAPI Plugin
 
-This repository will no longer be updated. The plugin’s functionality is included in ReadyAPI.
+# This repository will no longer be updated. The plugin’s functionality is included in ReadyAPI.
 
 SwaggerHub plugin for [ReadyAPI](https://smartbear.com/product/ready-api/overview/) lets you to integrate ReadyAPI and [SwaggerHub](https://swagger.io/tools/swaggerhub/). You will be able to --
 
